@@ -190,6 +190,24 @@ class symplectic_Integrator:
             k+=1
         return yCurrent
 
+def Hamiltonian(q, p, sigma=1):
+    """
+    Compute the Hamiltonian of a system given position and momentum.
+
+    Args:
+        q (np.ndarray): Position vector.
+        p (np.ndarray): Momentum vector.
+        sigma (float): Standard deviation.
+
+    Returns:
+        float: The Hamiltonian value.
+    """
+    # Assuming M = sigma^2 * I, where I is the identity matrix
+    sigma = 1  # This can be adjusted as needed
+    kinetic_energy = 0.5  * np.dot(p, p / (sigma ** 2)) 
+    potential_energy = -np.sum(np.log(q))  # Assuming q is the position vector
+    return kinetic_energy + potential_energy
+
 def HMC_step(y, sigma, function, symplMethod='leapfrog'):
     """
     Perform a single Hamiltonian Monte Carlo step.
@@ -212,7 +230,7 @@ def HMC_step(y, sigma, function, symplMethod='leapfrog'):
         proposed_x = symplectic_Integrator().implicitMidpointFPI(0, q_initial, sigma, function)
     else:
         raise ValueError("Invalid symplectic method specified.")
-    alpha = min(1, function(p_proposed) / function(y))
+    alpha = min(1, np.exp(-Hamiltonian(q_proposted, p_proposed, sigma) - Hamiltonian(q_initial, p_initial, sigma))
     u = np.random.uniform()
     if u < alpha:
         value = proposed_x
