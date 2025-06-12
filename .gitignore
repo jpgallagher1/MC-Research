@@ -1,5 +1,6 @@
-Summer/HMC.py
-Summer/distributions.py
+2025/Summer/HMC.py
+2025/Summer/distributions.py
+2025/Summer/testmetsampler.ipynb
 *.DS_Store
 *.gitattributes
 __pycache__/
