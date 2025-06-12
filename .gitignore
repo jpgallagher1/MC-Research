@@ -1,2 +1,5 @@
 Summer/HMC.py
 Summer/distributions.py
+*.DS_Store
+*.gitattributes
+__pycache__/
