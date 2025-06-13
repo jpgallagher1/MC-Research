@@ -1,3 +1,15 @@
+"""
+Module Name: sampler.py
+
+Description:
+    Making a list of distributions and functions for use in numerical sampling and analysis of approximate convergence. 
+
+Author: John Gallagher
+Created: 2025-06-03
+Last Modified: 
+Version: 1.0.0
+"""
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -12,21 +24,41 @@ class Sampler:
         Initialize the Sampler.
 
         Args:
-            samples (list): List to store sampled values.
-            initial_val (float): Initial value for the chain.
             target_function (callable): Target distribution function.
+            samples (list): List to store sampled values.
+            initial_val (float or 1-D array): Initial value for the chain.
             n (int): Number of samples to generate.
-            sigma (float): Standard deviation for the proposal distribution.
+            sigma (float, 1-dim array, or 2-dim square array): Standard deviation, diagonal of COV Matrix, or COV matrix for the proposal distribution.
             h (float): Step size for HMC.
             seed (int): Random seed for reproducibility.
         Returns:
             None
         """
+        self.target_function = target_function
         self.samples = samples if samples is not None else []
         self.accepted = None
         self.rejected = None
-        self.target_function = target_function
         self.n = n
+ 
+        ###BEGIN: IN PROGRESS####
+        # self.sigma = sigma if samples is None else np.diag(sigma) if isinstance(sigma, (list, np.ndarray)) and len(sigma) == 1 else sigma
+        # Check if sigma is a float, 1-D, or 2-D array 
+        # self.sigma = np.array(self.sigma) if isinstance(self.sigma, (list, np.ndarray)) else self.sigma
+        # if isinstance(self.sigma, np.ndarray) and self.sigma.ndim == 1:
+        #     self.sigma = np.diag(self.sigma)
+        # elif isinstance(self.sigma, np.ndarray) and self.sigma.ndim == 2 and self.sigma.shape[0] != self.sigma.shape[1]:
+        #     raise ValueError("Covariance matrix must be square.")
+        # elif not isinstance(self.sigma, (float, int)):
+        #     raise ValueError("Sigma must be a float, int, or a 1-D/2-D array.")
+        # if isinstance(self.sigma, (float, int)):
+        #     self.sigma = np.array([[self.sigma]])
+        # if isinstance(self.sigma, np.ndarray) and self.sigma.ndim == 1:
+        #     self.sigma = np.diag(self.sigma)
+        # if isinstance(self.sigma, np.ndarray) and self.sigma.ndim == 2 and self.sigma.shape[0] != self.sigma.shape[1]:
+        #     raise ValueError("Covariance matrix must be square.")
+        # if isinstance(self.sigma, np.ndarray) and self.sigma.ndim == 2 and self.sigma.shape[0] != self.sigma.shape[1]:
+        #     raise ValueError("Covariance matrix must be square.")       
+        ###END: IN PROGRESS####
         self.sigma = sigma
         self.h = h
         self.accepted = 0
@@ -58,7 +90,7 @@ class Sampler:
         results = []
         x = initial_val
         for _ in range(self.n):
-            new_state, accepted = self.metropolis_step(x)
+            new_state, accepted = self._metropolis_step(x)
             results.append((new_state, accepted))
             x = new_state
         
@@ -135,4 +167,12 @@ class Hamiltonian_system:
         kinetic_energy = 0.5 * np.dot(momentum.T, np.linalg.solve(self.mass, momentum))
         potential_energy = -np.log(self.hamiltonian(position)) if callable(self.hamiltonian) else 0
         return kinetic_energy + potential_energy
+
+def gauss_f(x):
+    """Gaussian target distribution."""
+    return np.exp(-x**2)
+# Example target functions
+def nongauss_f(x):
+    """Non-gaussian target distribution."""
+    return np.exp(-x**2 * (2 + np.sin(5*x) + np.sin(2*x)))
 
