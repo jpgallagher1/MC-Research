@@ -6,7 +6,7 @@ Description:
 
 Author: John Gallagher
 Created: 2025-06-03
-Last Modified: 
+Last Modified: 2025-06-13
 Version: 1.0.0
 """
 
@@ -28,7 +28,7 @@ class Sampler:
             samples (list): List to store sampled values.
             initial_val (float or 1-D array): Initial value for the chain.
             n (int): Number of samples to generate.
-            sigma (float, 1-dim array, or 2-dim square array): Standard deviation, diagonal of COV Matrix, or COV matrix for the proposal distribution.
+            sigma (float or 2-dim square array): Standard deviation or COV matrix for the proposal distribution. NO ERROR HANDLING YET.
             h (float): Step size for HMC.
             seed (int): Random seed for reproducibility.
         Returns:
@@ -39,27 +39,17 @@ class Sampler:
         self.accepted = None
         self.rejected = None
         self.n = n
- 
-        ###BEGIN: IN PROGRESS####
-        # self.sigma = sigma if samples is None else np.diag(sigma) if isinstance(sigma, (list, np.ndarray)) and len(sigma) == 1 else sigma
-        # Check if sigma is a float, 1-D, or 2-D array 
-        # self.sigma = np.array(self.sigma) if isinstance(self.sigma, (list, np.ndarray)) else self.sigma
-        # if isinstance(self.sigma, np.ndarray) and self.sigma.ndim == 1:
-        #     self.sigma = np.diag(self.sigma)
-        # elif isinstance(self.sigma, np.ndarray) and self.sigma.ndim == 2 and self.sigma.shape[0] != self.sigma.shape[1]:
-        #     raise ValueError("Covariance matrix must be square.")
-        # elif not isinstance(self.sigma, (float, int)):
-        #     raise ValueError("Sigma must be a float, int, or a 1-D/2-D array.")
+        self.sigma = sigma
         # if isinstance(self.sigma, (float, int)):
         #     self.sigma = np.array([[self.sigma]])
-        # if isinstance(self.sigma, np.ndarray) and self.sigma.ndim == 1:
-        #     self.sigma = np.diag(self.sigma)
-        # if isinstance(self.sigma, np.ndarray) and self.sigma.ndim == 2 and self.sigma.shape[0] != self.sigma.shape[1]:
-        #     raise ValueError("Covariance matrix must be square.")
-        # if isinstance(self.sigma, np.ndarray) and self.sigma.ndim == 2 and self.sigma.shape[0] != self.sigma.shape[1]:
-        #     raise ValueError("Covariance matrix must be square.")       
-        ###END: IN PROGRESS####
-        self.sigma = sigma
+        # elif isinstance(self.sigma, np.ndarray):
+        #     if self.sigma.ndim == 1:
+        #         self.sigma = np.diag(self.sigma)
+        #     elif self.sigma.ndim == 2:
+        #         if not self._check_sigma_symmetric():
+        #             raise ValueError("Covariance matrix must be symmetric.")
+        # else:
+        #     raise ValueError("Sigma must be a float, int, or a 1-D/2-D array.")
         self.h = h
         self.accepted = 0
         self.seed = seed
@@ -176,3 +166,8 @@ def nongauss_f(x):
     """Non-gaussian target distribution."""
     return np.exp(-x**2 * (2 + np.sin(5*x) + np.sin(2*x)))
 
+def gauss_2dimf(x, cov=None):
+    """2D Gaussian target distribution."""
+    if cov is None:
+        cov = np.eye(2)
+    return np.exp(-x.dot(np.linalg.inv(cov).dot(x)))
