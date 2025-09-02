@@ -70,25 +70,81 @@ class Sampler:
         if u < alpha:
             return proposed_x, True
         return x, False
-    def metropolis(self, initial_val):
+    def sample(self, initial_val, type='metropolis'):
         """
         Perform Metropolis-Hastings sampling.
         Returns:
             list: List of tuples containing sampled values and acceptance status.
         """
+        if type != 'metropolis' or type != 'HMC':
+            raise ValueError("Currently only 'metropolis' and 'HMC' sampling is supported.")
         np.random.seed(self.seed)
         results = []
         x = initial_val
         for _ in range(self.n):
-            new_state, accepted = self._metropolis_step(x)
-            results.append((new_state, accepted))
-            x = new_state
+            if type == 'metropolis':
+                new_state, accepted = self._metropolis_step(x)
+                results.append((new_state, accepted))
+                x = new_state
+            elif type == 'HMC':
+                new_state, accepted = self._HMC_step(x)
+                results.append((new_state, accepted))
+                x = new_state
         
         self.samples = pd.DataFrame(results, columns=['Value', 'Accepted'])
         self.accepted = self.samples[self.samples['Accepted']]
         self.rejected = self.samples[~self.samples['Accepted']]
         
         return self.samples
+    def Hamiltonian(q, p, function, sigma=1.):
+        """
+        Compute the Hamiltonian of a system given position and momentum.
+
+        Args:
+            q (np.ndarray): Position vector.
+            p (np.ndarray): Momentum vector.
+            sigma (float): Standard deviation.
+
+        Returns:
+            float: The Hamiltonian value.
+        """
+        # Assuming M = sigma^2 * I, where I is the identity matrix
+        sigma = 1  # This can be adjusted as needed
+        kinetic_energy = 0.5  * p**2 / (sigma ** 2)
+        potential_energy = -np.log(function(q))  # Assuming q is the position vector
+        return kinetic_energy + potential_energy
+
+    def _HMC_step(t, y, sigma, function, h=0.02):
+        """
+        Perform a single Hamiltonian Monte Carlo step.
+
+        Args:
+            y (float): Current state of the chain.
+            sigma (float): Step size for the proposal distribution.
+            function (callable): Target distribution function.
+            h (float): Step size for the leapfrog integration.
+
+        Returns:
+            tuple: A tuple containing the new state and a boolean indicating whether the step was accepted.
+        """
+        # initial state
+        q_initial = y
+        p_initial = np.random.normal(0, sigma)
+        
+        # Perform a leapfrog step for proposed step
+        q_proposed, p_proposed = leapfrog_step(t, q_initial, p_initial, sigma, function, h)
+        
+        # Compute the Hamiltonian for both initial and proposed states
+        Current_Hamiltonian = Hamiltonian(q_initial, p_initial, function, sigma)
+        Proposed_Hamiltonian = Hamiltonian(q_proposed, p_proposed, function, sigma)
+        # Compute the acceptance probability
+        alpha = min(1, np.exp(Current_Hamiltonian-Proposed_Hamiltonian))
+        
+        # Accept or reject the proposed step
+        u = np.random.uniform()
+        if u < alpha:
+            return q_proposed, True
+        return q_initial, False
     def plot_1dim_samples(self, x_range=(-11,11), n_points=10000, bins=50,
                      which='Accepted'):
         """
