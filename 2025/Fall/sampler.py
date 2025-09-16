@@ -220,6 +220,7 @@ class Hamiltonian_system:
 
 def gauss_f(x):
     """Gaussian target distribution."""
+    print('updated')
     return np.exp(-x**2)
 # Example target functions
 def nongauss_f(x):
