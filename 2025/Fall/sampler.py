@@ -227,7 +227,8 @@ def nongauss_f(x):
     return np.exp(-x**2 * (2 + np.sin(5*x) + np.sin(2*x)))
 
 def gauss_ndimf(x, cov=None):
-    """2D Gaussian target distribution."""
+    """n-Dim Gaussian target distribution."""
+    dim = len(x)
     if cov is None:
         cov = np.eye(dim)
     return np.exp(-x.dot(np.linalg.inv(cov).dot(x)))
