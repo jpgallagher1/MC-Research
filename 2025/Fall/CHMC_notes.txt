@@ -1,0 +1,20 @@
+John Gallagher
+Sept 28, 2025
+
+Currently working on updating the CHMC.ipynb to AVF:FPI
+
+To do:
+0) grad_q_H = -\del pi(q)/pi(q) *
+1) Implement AVF
+2) Implement CHMC via FPI
+3) Consolidate the HMC code by removing redundant experiments
+4) Speed up code by removing jax.random.split() evals into a single vector
+
+Possible to pass numpy array for p0 draws
+
+Philosophy: If we only use jax for grad, don't re-write whole code in jax
+
+look up multinorm determiniant for correction coefficient of gaussian
+
+test for 
+
