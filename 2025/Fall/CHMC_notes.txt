@@ -18,3 +18,57 @@ look up multinorm determiniant for correction coefficient of gaussian
 
 test for 
 
+Note on jax.experimental.sparse matrix implementation in jnp, jax.scipy and scipi.sparse
+https://forum.pyro.ai/t/jax-experimental-sparse-for-better-memory-speed-performance/6060/9
+
+
+Some newton examples from econ:
+https://jax.quantecon.org/newtons_method.html
+Working Newton: 
+def newton(f, x0, tol, max_iter):
+    fprime = jax.grad(f)
+    update = lambda x: x-f(x)/fprime(x)
+    x = x0
+    error = jnp.inf
+    n = 0
+    while error > tol:
+        n +=1
+        y = update(x)
+        error = abs(x-y)
+        x = y
+    return x, n
+
+def newton(F, x0, tol = 1e-5, max_iter=100):
+    x = x0
+    jacF = jax.jacobian(F)
+    @jax.jit
+    def update(x):
+        return x - jnp.linalg.solve(jacF(x), F(x))
+    error = tol+1
+    n = 0
+    while error > tol and n < max_iter:
+        n+=1
+        y = q(x)
+        error = jnp.linalg.norm(y-x)
+        x = y
+        if n%100 ==0:
+            print(f'iteration {n}, error = {error}')
+    return x
+
+
+
+Some tests on colab GPU
+GPU Accelerated 10 000 dim, 
+Draw sample: 0.0013899803161621094
+Integration: 0.18635129928588867
+1st run: 249.69273853302002
+Draw sample: 0.000335693359375
+Integration: 0.0001995563507080078
+
+Draw sample: 0.0013725757598876953
+Integration: 0.1289064884185791
+1st run: 19.997814416885376
+Draw sample: 0.00031113624572753906
+Integration: 0.00019311904907226562
+1000 runs:  6.723971843719482 
+ 1 run 0.0006723971843719482
