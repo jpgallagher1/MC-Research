@@ -1,6 +1,8 @@
 John Gallagher
 Sept 28, 2025
 
+Another idea: what about for a fixed radius, doing a horizion profile to look for local maxima, then using that local max to compare relative minima. 
+
 Currently working on updating the CHMC.ipynb to AVF:FPI
 
 To do:
@@ -72,3 +74,35 @@ Draw sample: 0.00031113624572753906
 Integration: 0.00019311904907226562
 1000 runs:  6.723971843719482 
  1 run 0.0006723971843719482
+
+def hmc_kernel(carry, _):
+    last_sample, key = carry
+    key0, key1 = jax.random.split(key)
+    new_sample, _ = draw_p(last_sample, key0)
+    qp_star = jit_integrator(new_sample)
+    deltaH = jit_H(qp_star) - jit_H(new_sample)
+    is_accepted = accept(deltaH, key0)
+    qp_out = jnp.where(is_accepted, qp_star, last_sample)  # Fixed: should be last_sample, not qp
+    return [qp_out, key1], _
+
+def hmc_sampler(initial_sample, key, num_samples):
+    def hmc_step(carry, _):
+        last_sample, key = carry
+        # Pass carry tuple to hmc_kernel, not separate arguments
+        (next_sample, next_key), _ = hmc_kernel([last_sample, key], _)
+        return (next_sample, next_key), next_sample
+    
+    (_, _), samples = jax.lax.scan(hmc_step, (initial_sample, key), xs=None, length=num_samples)
+    return samples
+
+
+# compile
+start=time.time()
+sample = hmc_sampler(key, [q0a, p0b], 1)
+end = time.time()
+print("1st run:", end-start)
+# main run
+start = time.time()
+samples = hmc_sampler(key, [q0a, p0b], 100)
+end = time.time()
+print("1000 runs: ", end - start, "\n 1 run", (end-start)/10000)
