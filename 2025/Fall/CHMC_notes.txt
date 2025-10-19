@@ -1,11 +1,66 @@
 John Gallagher
+Oct 18, 2025
+mean alpha vs dimension d, with series of different taus
+
+Oct 17, 2025
+
+Currently working on CHMC_tau_plots.ipynb
+
+Updating hmc to generate jitable functions updated with appropriate statics
+
+
+John Gallagher
+Oct 16, 2025
+
+Currently working on CHMC_tau_plots.ipynb
+
+Updating hmc to generate jitable functions updated with appropriate statics
+
+
+
+Oct 14, 2025
+
+Some updates, validate code with matlab code
+qout,pout,Jac,Reject,Iter,alpha,deltaH
+
+To do: Diagnostic plots
+) output iteration count for FPI
+) deltaH histogram as function of tau
+) deltaH histogram as function of tau, T
+) Check acceptance rate
+) Hand code jacobian and check against Jax
+
+To Do: Project plots
+MCMC inerations with 
+Mu
+KS Metric
+Cov
+
+
+
+Oct 10, 2025
+
+
+Currently working on CHMC_with_tests.ipynb
+
+To do: Diagnostic plots
+) output iteration count for FPI
+) deltaH histogram as function of tau
+) deltaH histogram as function of tau, T
+) Check acceptance rate
+) Hand code jacobian and check against Jax
+
+To Do: Project plots
+MCMC inerations with 
+Mu
+KS Metric
+Cov
+
+
 Sept 28, 2025
 
 Another idea: what about for a fixed radius, doing a horizion profile to look for local maxima, then using that local max to compare relative minima. 
 
-Currently working on updating the CHMC.ipynb to AVF:FPI
-
-To do:
 0) grad_q_H = -\del pi(q)/pi(q) *
 1) Implement AVF
 2) Implement CHMC via FPI

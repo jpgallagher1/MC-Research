@@ -3,13 +3,18 @@
 2025/Summer/testmetsampler.ipynb
 # 2025/Summer/scratch-file.ipynb
 2025/Fall/Old_Scratch/*
+2025/Fall/Images/*
+2025/Fall/figures/*
 2025/Fall/*.csv
 2025/Fall/jitcomparisons.ipynb
 2025/Fall/distributions.py
 2025/Fall/integrators.py
+2025/Fall/integrators.ipynb
 2025/Fall/Maverick.py
 2025/Fall/sampler.py
 *.DS_Store
 *.gitattributes
 __pycache__/
 2025/Spring/*
+Geoffrey-McGregor-CHMC-Codes-040dd24
+2025/Fall/chmc_matlab/*
