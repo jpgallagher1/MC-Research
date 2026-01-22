@@ -1,0 +1,7 @@
+John Gallagher
+Jan 16, 2026
+
+Reimplement using just numpy, scipy and leverage sparse matrix for Jacobian
+
+
+Porting Jax Code

@@ -1,2 +1,2 @@
 # UCMerced-Research
-Coding projects and research at UC Merced
+HMC Coding projects and research at UC Merced

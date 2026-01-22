@@ -112,7 +112,7 @@ def gen_leapfrog(gradH, tau, N):
 
     return leapfrog
 
-def gen_midpointFPI(gradH, tau, N, tol,maxIter, solve = jnp.linalg.solve):
+def gen_midpointFPI(gradH, tau, N, tol,maxIter):
     """
     Generates midpointFPI function with appropriate statics: 
     tau, tol, maxIter, 
@@ -139,7 +139,7 @@ def gen_midpointFPI(gradH, tau, N, tol,maxIter, solve = jnp.linalg.solve):
 
         def newton_step(qp):
             jacF = jax.jacobian(F)
-            qpout = x0 - solve(jacF(qp), F(qp))
+            qpout = x0 - jnp.linalg.solve(jacF(qp), F(qp))
             return qpout
 
         def cond(carry):
@@ -181,10 +181,31 @@ def gen_hmc_kernel(H, tau, N):
         return carry_out, carry_out
     return hmc_kernel
 
+def gen_chmc_kernel(H, tau, N, tol, maxIter):
+    gradH = jax.grad(H)
+    integrator = gen_midpointFPI(gradH, tau, N, tol, maxIter)
+
+    def chmc_kernel(carry_in, key):
+        carry, _, _ = carry_in
+        qp0, _ = draw_p(carry, key)
+        print(qp0)
+        qp_star = integrator(qp0)
+        deltaH = H(qp0) - H(qp_star)  # -(final - init) = init -final
+        is_accepted = accept(deltaH, key)
+        qp_out = jnp.where(is_accepted, qp_star, qp0)
+        carry_out = [qp_out, deltaH, is_accepted]
+        return carry_out, carry_out
+    return chmc_kernel
+
 def hmc_sampler(initial_sample, keys, H, tau, T):
     N = jnp.ceil(T/tau).astype(int)
     hmc_kernel = gen_hmc_kernel(H, tau, N)
     _, samples = jax.lax.scan(hmc_kernel, initial_sample, xs=keys)
+    return samples
+def chmc_sampler(initial_sample, keys, H, tau, T, tol, maxIter):
+    N = jnp.ceil(T/tau).astype(int)
+    chmc_kernel = gen_hmc_kernel(H, tau, N, tol, maxIter)
+    _, samples = jax.lax.scan(chmc_kernel, initial_sample, xs=keys)
     return samples
 
 def gen_hamiltonian(Mass_inv, target):
@@ -241,3 +262,68 @@ end = time.time()
 print(
     f"{mainnum_samples} runs: {end - start:.2f} \n 1 run:  {(end-start)/mainnum_samples}"
 )
+
+import numpy as np
+ndims = 9
+dims = np.logspace(2,10, ndims,base=2, dtype=int)
+# Mass_inv = jnp.eye(dim)
+# target = gauss_ndimf_jax
+# hamiltonian = gen_hamiltonian(Mass_inv, target)
+# grad_target = jit(jax.grad(target))
+# jit_H = jit(hamiltonian)
+# gradH = jax.jit(jax.grad(hamiltonian))
+
+# jit_integrator = jax.jit(leapfrog)
+# jit_integrator = jit(midpointFPI)
+
+# Set parameters
+key = jax.random.PRNGKey(1)
+
+initnum_samples = 1
+mainnum_samples = 1000
+keys_start = jax.random.split(key, initnum_samples)
+keys_main = jax.random.split(key, mainnum_samples)
+# qp_init = jax.random.normal(key, shape=(2 * dim,))
+
+# Structure of carry
+# init_sample: [Array: sample, float: deltaH, bool: Accepted]
+
+tol = 1e-4
+max_iter = 100
+tau = 0.2
+T = 1
+
+# tol = 1e-4
+# max_iter = 100
+numtaus = 7
+taufinal =0.5
+tauinit = 0.1
+tau_set = 0.2*1/jnp.logspace(0,6,numtaus,base=2)
+# tau_set = jnp.linspace(tauinit, taufinal, numtaus)
+# [Array: sample, float: deltaH, bool: Accepted]
+# samples_taus = np.zeros((mainnum_samples, 2*dim, numtaus, ndims))
+samples_deltaHs = np.zeros((mainnum_samples,numtaus, ndims))
+samples_accepted = np.zeros((mainnum_samples,numtaus, ndims))
+hmc_samples = []
+for dim in dims:
+    hmc_samples.append(np.zeros((mainnum_samples, dim)))
+
+
+# initial_sample, keys, H, tau, N
+vhmc_sampler = jax.vmap(hmc_sampler, in_axes=(None, None, None, 0, None))
+
+jhmc_sampler = jit(hmc_sampler, static_argnums=(2,3,4))
+for i, taus in enumerate(tau_set):
+    for j, dim in enumerate(dims):
+        N = int(jnp.ceil(T/taus))
+        # if dim == 4:
+        print(f'taus: {taus}, dim: {dim}, N: {N}')
+        Mass_inv = jnp.eye(dim)
+        target = gauss_ndimf_jax
+        hamiltonian = gen_hamiltonian(Mass_inv, target)
+        grad_target = jit(jax.grad(target))
+        jit_H = jit(hamiltonian)
+        gradH = jax.jit(jax.grad(hamiltonian))
+        qp_init = jax.random.normal(key, shape=(2 * dim,))
+        init_sample = [qp_init, 1, False]
+        hmc_samples[j], samples_deltaHs[:,i, j], samples_accepted[:,i, j] = hmc_sampler(init_sample, keys_main,  hamiltonian, taus, N)

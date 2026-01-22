@@ -1,4 +1,8 @@
 John Gallagher
+Nov 12, 2025
+
+Reimplement using just numpy, scipy and leverage sparse matrix for Jacobian
+
 Oct 18, 2025
 mean alpha vs dimension d, with series of different taus
 
